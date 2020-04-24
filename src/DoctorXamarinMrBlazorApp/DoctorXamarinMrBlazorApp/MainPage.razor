@@ -1,0 +1,81 @@
+﻿@inject BLEService BleService
+@using System.Threading
+@using DoctorXamarinMrBlazorApp.Data
+@using DoctorXamarinMrBlazorApp.Event
+@using Plugin.BLE.Abstractions.Contracts
+
+<Frame CornerRadius="10" BackgroundColor="@Color.FromHex("824B4B")">
+
+    <StackLayout Orientation="StackOrientation.Vertical">
+        <StackLayout Orientation="StackOrientation.Horizontal" HorizontalOptions="LayoutOptions.Center">
+
+            <Label Text="Press the button to start the BLE Scan"
+                   FontAttributes="FontAttributes.Bold" TextColor="Color.White"
+                   VerticalTextAlignment="TextAlignment.Start" HorizontalTextAlignment="TextAlignment.Center" />
+
+            <Button Text="Start Scan" OnClick="@StartScan" CornerRadius="5"/>
+
+        </StackLayout>
+
+<Frame BorderColor="Color.LightBlue" CornerRadius="5" Margin="2" Padding="10">
+    <ScrollView>
+        <StackLayout>
+
+            @* List of todos *@
+            @if (items == null)
+            {
+                <StackLayout Orientation="StackOrientation.Horizontal" HorizontalOptions="LayoutOptions.Center">
+                    <Label Text="Loading..." VerticalTextAlignment="TextAlignment.Center" />
+                    <ActivityIndicator Color="@Color.FromHex("824B4B")"
+                                       IsRunning="true" />
+                </StackLayout>
+            }
+            else
+            {
+                foreach (var item in items)
+                {
+                    <DeviceItem Item="item" />
+                }
+            }
+        </StackLayout>
+    </ScrollView>
+</Frame>
+    </StackLayout>
+</Frame>
+
+
+@code
+{
+    List<MyDevice> items;
+
+    public virtual void SubscribeConnectedDevice()
+    {
+        MessagingCenter.Subscribe<BLEService, ConnectDeviceEventArgs>(this, string.Empty, (s, e) =>
+        {
+            //OnPropertyChanged("IsDeviceConnected");
+        });
+    }
+
+
+    protected override void OnInitialized()
+    {
+        items = new List<MyDevice>();
+
+        BleService.MyDeviceDiscovered += (sender, args) =>
+        {
+            if (items == null)
+                items = new List<MyDevice>();
+
+            if (!items.Any(x => x.Id == args.Device.Id))
+                items.Add(args.Device);
+        };
+
+        SubscribeConnectedDevice();
+    }
+
+    async Task StartScan()
+    {
+        items = null;
+        await BleService.StartScan(ScanMode.LowLatency);
+    }
+}

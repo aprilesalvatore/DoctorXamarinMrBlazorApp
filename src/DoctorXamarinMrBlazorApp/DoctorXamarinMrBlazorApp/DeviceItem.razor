@@ -1,0 +1,48 @@
+﻿@inject BLEService BleService
+@using DoctorXamarinMrBlazorApp.Data
+@using Acr.UserDialogs
+<StackLayout Orientation="StackOrientation.Horizontal">
+    <Label Text="@Item.Name" FontSize="15"
+           HorizontalOptions="LayoutOptions.FillAndExpand" />
+    <Button Text="Connect" FontSize="12" BackgroundColor="@ButtonColorBackground.GetColor(@Item.IsConnected)" TextColor="Color.White"
+            OnClick="OnDetailsClick" CornerRadius="5"/>
+</StackLayout>
+
+@code
+{
+    [Parameter] public MyDevice Item { get; set; }
+
+    public string Message { get; set; }
+
+    ModalContainer dialog;
+
+    public async Task OnDetailsClick()
+    {
+        if (Item != null)
+        {
+            if (!Item.IsConnected)
+            {
+
+                var res = await UserDialogs.Instance.PromptAsync($"Do you want to connect to '{Item.Name}' service ?", "Info", "OK");
+
+                if (res.Ok)
+                {
+                    await BleService.Connect(Item);
+                    await UserDialogs.Instance.ConfirmAsync($"'{Item.Name}' is connected", "Info", "OK");
+                }
+
+
+            }
+            else
+            {
+                var res = await UserDialogs.Instance.PromptAsync($"Do you want to disconnect to '{Item.Name}' service ?", "Info", "OK");
+
+                if (res.Ok)
+                {
+                    await BleService.Disconnect(Item);
+                    await UserDialogs.Instance.ConfirmAsync($"'{Item.Name}' is disconnected", "Info", "OK");
+                }
+            }
+        }
+    }
+}
